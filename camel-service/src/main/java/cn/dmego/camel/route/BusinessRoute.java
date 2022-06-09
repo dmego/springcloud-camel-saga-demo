@@ -48,12 +48,19 @@ public class BusinessRoute extends RouteBuilder {
                 .to("direct:start-buy")
                 .end();
 
+        rest().description("Camel Saga compensate Api")
+                .consumes("application/json").produces("application/json")
+                .put("/compensate")
+                .route()
+                .id("lra-compensate")
+                .removeHeaders("CamelHttp*")
+                .to("direct:cancel-buy")
+                .end();
+
         from("direct:start-buy")
                 .id("start-buy")
                 .log("Start of direct:start-buy with body: ${body}")
-                .removeHeader("CamelHttp*")
-                .removeHeader(Exchange.HTTP_PATH)
-                .removeHeader(Exchange.HTTP_URI)
+                .removeHeaders("CamelHttp*")
                 .saga()
                 .option("holderId", exchangeProperty("orderId"))
                 .option("order", exchangeProperty("order"))
@@ -74,9 +81,7 @@ public class BusinessRoute extends RouteBuilder {
         from("direct:create-order")
                 .id("create-order")
                 .log("Start of direct:create-order with body: ${body}")
-                .removeHeader("CamelHttp*")
-                .removeHeader(Exchange.HTTP_PATH)
-                .removeHeader(Exchange.HTTP_URI)
+                .removeHeaders("CamelHttp*")
                 .setBody(exchangeProperty("order"))
                 //.marshal().json(JsonLibrary.Jackson)
                 .setHeader(Exchange.HTTP_METHOD, constant(HttpMethods.POST))
@@ -88,9 +93,7 @@ public class BusinessRoute extends RouteBuilder {
         from("direct:reduce-balance")
                 .id("reduce-balance")
                 .log("Start of direct:reduce-balance with body: ${body}")
-                .removeHeader("CamelHttp*")
-                .removeHeader(Exchange.HTTP_PATH)
-                .removeHeader(Exchange.HTTP_URI)
+                .removeHeaders("CamelHttp*")
                 .setBody(exchangeProperty("account"))
                 //.marshal().json(JsonLibrary.Jackson)
                 .setHeader(Exchange.HTTP_METHOD, constant(HttpMethods.POST))
@@ -102,9 +105,7 @@ public class BusinessRoute extends RouteBuilder {
         from("direct:reduce-stock")
                 .id("reduce-stock")
                 .log("Start of direct:reduce-stock with body: ${body}")
-                .removeHeader("CamelHttp*")
-                .removeHeader(Exchange.HTTP_PATH)
-                .removeHeader(Exchange.HTTP_URI)
+                .removeHeaders("CamelHttp*")
                 .setBody(exchangeProperty("product"))
                 //.marshal().json(JsonLibrary.Jackson)
                 .setHeader(Exchange.HTTP_METHOD, constant(HttpMethods.POST))
@@ -122,9 +123,11 @@ public class BusinessRoute extends RouteBuilder {
         from("direct:cancel-buy")
                 .id("cancel-buy")
                 .log("Start of direct:cancel-buy with header: ${headers}")
+                .removeHeaders("CamelHttp*")
                 .process(new Processor() {
                     @Override
                     public void process(Exchange exchange) throws Exception {
+                        exchange.setProperty("holderId", exchange.getIn().getHeader("holderId"));
                         exchange.setProperty("order", exchange.getIn().getHeader("order"));
                         exchange.setProperty("account", exchange.getIn().getHeader("account"));
                         exchange.setProperty("product", exchange.getIn().getHeader("product"));
@@ -142,9 +145,7 @@ public class BusinessRoute extends RouteBuilder {
         from("direct:rollback-order")
                 .id("rollback-order")
                 .log("Start of direct:rollback-order with body: ${body}")
-                .removeHeader("CamelHttp*")
-                .removeHeader(Exchange.HTTP_PATH)
-                .removeHeader(Exchange.HTTP_URI)
+                .removeHeaders("CamelHttp*")
                 .setBody(exchangeProperty("order"))
                 //.marshal().json(JsonLibrary.Jackson)
                 .setHeader(Exchange.HTTP_METHOD, constant(HttpMethods.POST))
@@ -157,9 +158,7 @@ public class BusinessRoute extends RouteBuilder {
         from("direct:rollback-balance")
                 .id("rollback-balance")
                 .log("Start of direct:rollback-balance with body: ${body}")
-                .removeHeader("CamelHttp*")
-                .removeHeader(Exchange.HTTP_PATH)
-                .removeHeader(Exchange.HTTP_URI)
+                .removeHeaders("CamelHttp*")
                 .setBody(exchangeProperty("account"))
                 //.marshal().json(JsonLibrary.Jackson)
                 .setHeader(Exchange.HTTP_METHOD, constant(HttpMethods.POST))
@@ -172,9 +171,7 @@ public class BusinessRoute extends RouteBuilder {
         from("direct:rollback-stock")
                 .id("rollback-stock")
                 .log("Start of direct:rollback-stock with body: ${body}")
-                .removeHeader("CamelHttp*")
-                .removeHeader(Exchange.HTTP_PATH)
-                .removeHeader(Exchange.HTTP_URI)
+                .removeHeaders("CamelHttp*")
                 .setBody(exchangeProperty("product"))
                 //.marshal().json(JsonLibrary.Jackson)
                 .setHeader(Exchange.HTTP_METHOD, constant(HttpMethods.POST))
@@ -187,9 +184,7 @@ public class BusinessRoute extends RouteBuilder {
         from("direct:query-price")
                 .id("query-price")
                 .log("Start of direct:query-price with body: ${body}")
-                .removeHeader("CamelHttp*")
-                .removeHeader(Exchange.HTTP_PATH)
-                .removeHeader(Exchange.HTTP_URI)
+                .removeHeaders("CamelHttp*")
                 .setHeader(Exchange.HTTP_METHOD, constant(HttpMethods.GET))
                 .serviceCall(PRODUCT_SERVICE + "/product/getPrice/${body.productId}")
                 .convertBodyTo(Integer.class)
@@ -256,17 +251,20 @@ public class BusinessRoute extends RouteBuilder {
 
         from("direct:clear-order-holder")
                 .id("clear-order-holder")
+                .removeHeaders("CamelHttp*")
                 .setHeader(Exchange.HTTP_METHOD, constant(HttpMethods.DELETE))
                 .serviceCall(ORDER_SERVICE + "/order/clearHolder/${exchangeProperty.holderId}");
 
 
         from("direct:clear-account-holder")
                 .id("clear-account-holder")
+                .removeHeaders("CamelHttp*")
                 .setHeader(Exchange.HTTP_METHOD, constant(HttpMethods.DELETE))
                 .serviceCall(ACCOUNT_SERVICE + "/account/clearHolder/${exchangeProperty.holderId}");
 
         from("direct:clear-product-holder")
                 .id("clear-product-holder")
+                .removeHeaders("CamelHttp*")
                 .setHeader(Exchange.HTTP_METHOD, constant(HttpMethods.DELETE))
                 .serviceCall(PRODUCT_SERVICE + "/product/clearHolder/${exchangeProperty.holderId}");
 

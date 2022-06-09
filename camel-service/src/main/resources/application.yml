@@ -34,9 +34,9 @@ hawtio:
 camel:
 #  lra:
 #    enabled: true
-#    coordinator-url: http://127.0.0.1:7070
-#    local-participant-url: http://127.0.0.1:9095
-#    local-participant-context-path: /*
+#    coordinator-url: http://127.0.0.1:8080
+#    local-participant-url: http://127.0.0.1:8085
+#    local-participant-context-path: /camel
 #  service:
 #    lra:
 #      enabled: true
