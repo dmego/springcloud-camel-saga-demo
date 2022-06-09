@@ -1,0 +1,58 @@
+server:
+  port: 8085
+spring:
+  jmx:
+    enabled: true
+  application:
+    name: camel-service
+  cloud:
+    consul:
+      host: 127.0.0.1
+      port: 8500
+      discovery:
+        heartbeat:
+          enabled: true
+          ttl: 5s
+        prefer-ip-address: true
+        #health-check-path: /health
+
+logging:
+  level:
+    root: info
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        #配置暴露端点
+        include: hawtio,jolokia,health,info,beans
+
+hawtio:
+  authenticationEnabled: false
+
+camel:
+#  lra:
+#    enabled: true
+#    coordinator-url: http://127.0.0.1:7070
+#    local-participant-url: http://127.0.0.1:9095
+#    local-participant-context-path: /*
+#  service:
+#    lra:
+#      enabled: true
+#  servlet:
+#    mapping:
+#      context-path: /*
+  springboot:
+    # routes-include-pattern: classpath:route/*.xml
+    tracing: true
+  rest:
+    #component: servlet
+    binding-mode: auto
+    port: ${server.port}
+    producer-component: undertow
+
+  cloud:
+    service-call:
+      component: undertow
+
